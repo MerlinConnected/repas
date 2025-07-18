@@ -1,285 +1,385 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { createClient } from '@supabase/supabase-js'
 
+import { Button } from '@/components/ui/button'
+import {
+	Form,
+	FormControl,
+	FormDescription,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage
+} from '@/components/ui/form'
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue
+} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+
 import RepasLineChart from '@/components/RepasLineChart'
+import { format } from 'date-fns'
+import { CalendarIcon } from 'lucide-react'
+import { Calendar } from '@/components/ui/calendar'
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger
+} from '@/components/ui/popover'
+
+import { cn } from '@/lib/utils'
 
 const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_URL!,
 	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-type RepasEntry = {
-	id?: number
+type RepasFormValues = {
 	restaurant_name: string
 	reviewer_name: string
-	rating: number
+	rating: string
 	comment: string
 	location: string
-	created_at: string
+	date: string
 }
 
-function SuperRepasForm({ onSuccess }: { onSuccess?: () => void }) {
-	const [form, setForm] = useState({
-		restaurant_name: '',
-		reviewer_name: '',
-		rating: '',
-		comment: '',
-		location: '',
-		date: new Date().toISOString().slice(0, 10) // YYYY-MM-DD
-	})
+export default function Page() {
+	const [restaurants, setRestaurants] = useState<string[]>([])
+	const [locations, setLocations] = useState<string[]>([])
+	const [allData, setAllData] = useState<any[]>([])
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const [restaurants, setRestaurants] = useState<string[]>([])
 	const [showNewRestaurant, setShowNewRestaurant] = useState(false)
-	const [allData, setAllData] = useState<RepasEntry[]>([])
-	const [locations, setLocations] = useState<string[]>([])
+	const [newRestaurant, setNewRestaurant] = useState('')
 	const [showNewLocation, setShowNewLocation] = useState(false)
+	const [newLocation, setNewLocation] = useState('')
 
-	// Fetch unique restaurant names on mount
-	useEffect(() => {
-		const fetchRestaurants = async () => {
-			const { data, error } = await supabase
-				.from('super repas')
-				.select('restaurant_name')
-			if (!error && data) {
-				const unique = Array.from(
-					new Set(data.map((r) => r.restaurant_name).filter(Boolean))
-				)
-				setRestaurants(unique)
-			}
+	const form = useForm<RepasFormValues>({
+		defaultValues: {
+			restaurant_name: '',
+			reviewer_name: '',
+			rating: '',
+			comment: '',
+			location: '',
+			date: new Date().toISOString().slice(0, 10)
 		}
-		fetchRestaurants()
-	}, [])
+	})
 
-	// Fetch all reviews for the chart
+	// Fetch restaurants and locations
 	useEffect(() => {
 		const fetchData = async () => {
-			const { data, error } = await supabase.from('super repas').select()
-			if (!error && data) setAllData(data)
+			const { data: restData } = await supabase
+				.from('super repas')
+				.select('restaurant_name')
+			if (restData)
+				setRestaurants(
+					Array.from(
+						new Set(restData.map((r) => r.restaurant_name).filter(Boolean))
+					)
+				)
+			const { data: locData } = await supabase
+				.from('super repas')
+				.select('location')
+			if (locData)
+				setLocations(
+					Array.from(new Set(locData.map((l) => l.location).filter(Boolean)))
+				)
+			const { data: all } = await supabase.from('super repas').select()
+			if (all) setAllData(all)
 		}
 		fetchData()
 	}, [])
 
-	// Fetch unique locations on mount
-	useEffect(() => {
-		const fetchLocations = async () => {
-			const { data, error } = await supabase
-				.from('super repas')
-				.select('location')
-			if (!error && data) {
-				const unique = Array.from(
-					new Set(data.map((r) => r.location).filter(Boolean))
-				)
-				setLocations(unique)
-			}
-		}
-		fetchLocations()
-	}, [])
-
-	const handleChange = (
-		e: React.ChangeEvent<
-			HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-		>
-	) => {
-		setForm({ ...form, [e.target.name]: e.target.value })
-	}
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
+	const onSubmit = async (values: RepasFormValues) => {
 		setLoading(true)
 		setError(null)
-
 		const { error } = await supabase.from('super repas').insert([
 			{
-				restaurant_name: form.restaurant_name,
-				reviewer_name: form.reviewer_name,
-				rating: parseFloat(form.rating),
-				comment: form.comment,
-				location: form.location, // <-- add this
-				created_at: new Date(form.date).toISOString()
+				restaurant_name: values.restaurant_name,
+				reviewer_name: values.reviewer_name,
+				rating: parseFloat(values.rating),
+				comment: values.comment,
+				location: values.location,
+				created_at: new Date(values.date).toISOString()
 			}
 		])
-
 		setLoading(false)
-
-		if (error) {
-			setError(error.message)
-		} else {
-			// If a new restaurant was added, update the dropdown
-			if (
-				showNewRestaurant &&
-				form.restaurant_name &&
-				!restaurants.includes(form.restaurant_name)
-			) {
-				setRestaurants((prev) => [...prev, form.restaurant_name])
-			}
-			if (
-				showNewLocation &&
-				form.location &&
-				!locations.includes(form.location)
-			) {
-				setLocations((prev) => [...prev, form.location])
-			}
-			setForm({
-				restaurant_name: '',
-				reviewer_name: '',
-				rating: '',
-				comment: '',
-				location: '', // <-- add this
-				date: new Date().toISOString().slice(0, 10)
-			})
-			setShowNewRestaurant(false)
-			setShowNewLocation(false)
-			if (onSuccess) onSuccess()
-			// re-fetch data
-			supabase
-				.from('super repas')
-				.select()
-				.then(({ data, error }) => {
-					if (!error && data) setAllData(data)
-				})
+		if (error) setError(error.message)
+		else {
+			form.reset()
+			// Optionally re-fetch data
+			const { data: all } = await supabase.from('super repas').select()
+			if (all) setAllData(all)
 		}
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className='space-y-2'>
-			{showNewRestaurant ? (
-				<div className='flex gap-2'>
-					<input
-						name='restaurant_name'
-						placeholder='New Restaurant Name'
-						value={form.restaurant_name}
-						onChange={handleChange}
-						required
-					/>
-					<button
-						type='button'
-						onClick={() => {
-							setShowNewRestaurant(false)
-							setForm((f) => ({ ...f, restaurant_name: '' }))
-						}}
-					>
-						Cancel
-					</button>
-				</div>
-			) : (
-				<div className='flex gap-2'>
-					<div className='grid w-full max-w-sm items-center gap-3'>
-						<Label htmlFor='email'>Email</Label>
-						<Input type='email' id='email' placeholder='Email' />
-					</div>
-					<select
-						name='restaurant_name'
-						value={form.restaurant_name}
-						onChange={handleChange}
-						required
-					>
-						<option value='' disabled>
-							Select Restaurant
-						</option>
-						{restaurants.map((r) => (
-							<option key={r} value={r}>
-								{r}
-							</option>
-						))}
-					</select>
-					<button type='button' onClick={() => setShowNewRestaurant(true)}>
-						Add new restaurant
-					</button>
-				</div>
-			)}
-			{showNewLocation ? (
-				<div className='flex gap-2'>
-					<input
-						name='location'
-						placeholder='New Location'
-						value={form.location}
-						onChange={handleChange}
-						required
-					/>
-					<button
-						type='button'
-						onClick={() => {
-							setShowNewLocation(false)
-							setForm((f) => ({ ...f, location: '' }))
-						}}
-					>
-						Cancel
-					</button>
-				</div>
-			) : (
-				<div className='flex gap-2'>
-					<select
-						name='location'
-						value={form.location}
-						onChange={handleChange}
-						required
-					>
-						<option value='' disabled>
-							Select Location
-						</option>
-						{locations.map((loc) => (
-							<option key={loc} value={loc}>
-								{loc}
-							</option>
-						))}
-					</select>
-					<button type='button' onClick={() => setShowNewLocation(true)}>
-						Add new location
-					</button>
-				</div>
-			)}
-			<select
-				name='reviewer_name'
-				value={form.reviewer_name}
-				onChange={handleChange}
-				required
+		<Form {...form}>
+			<form
+				onSubmit={form.handleSubmit(onSubmit)}
+				className='space-y-6 max-w-lg mx-auto'
 			>
-				<option value='' disabled>
-					Select Reviewer
-				</option>
-				<option value='Gaëtan'>Gaëtan</option>
-				<option value='Ferdinand'>Ferdinand</option>
-				<option value='Lili-Rose'>Lili-Rose</option>
-			</select>
-			<input
-				name='rating'
-				placeholder='Rating'
-				type='number'
-				step='0.1'
-				max={10}
-				value={form.rating}
-				onChange={handleChange}
-				required
-			/>
-			<input
-				type='date'
-				name='date'
-				value={form.date}
-				onChange={handleChange}
-				required
-				className='input'
-			/>
-			<textarea
-				name='comment'
-				placeholder='Comment'
-				value={form.comment}
-				onChange={handleChange}
-				required
-			/>
-			<button type='submit' disabled={loading}>
-				{loading ? 'Submitting...' : 'Submit'}
-			</button>
-			{error && <div style={{ color: 'red' }}>{error}</div>}
-			<RepasLineChart data={allData} />
-		</form>
+				<FormField
+					control={form.control}
+					name='restaurant_name'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Nom du plat</FormLabel>
+							{showNewRestaurant ? (
+								<div className='flex gap-2'>
+									<Input
+										value={newRestaurant}
+										onChange={(e) => setNewRestaurant(e.target.value)}
+										placeholder='Nouveau plat'
+									/>
+									<Button
+										type='button'
+										onClick={() => {
+											if (
+												newRestaurant.trim() &&
+												!restaurants.includes(newRestaurant.trim())
+											) {
+												setRestaurants((prev) => [
+													...prev,
+													newRestaurant.trim()
+												])
+												field.onChange(newRestaurant.trim())
+											}
+											setShowNewRestaurant(false)
+											setNewRestaurant('')
+										}}
+									>
+										Ajouter
+									</Button>
+									<Button
+										type='button'
+										variant='secondary'
+										onClick={() => {
+											setShowNewRestaurant(false)
+											setNewRestaurant('')
+										}}
+									>
+										Annuler
+									</Button>
+								</div>
+							) : (
+								<div className='flex gap-2'>
+									<Select onValueChange={field.onChange} value={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder='Nom du plat' />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											{restaurants.map((r) => (
+												<SelectItem key={r} value={r}>
+													{r}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Button
+										type='button'
+										onClick={() => setShowNewRestaurant(true)}
+									>
+										Ajouter un plat
+									</Button>
+								</div>
+							)}
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name='location'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Lieu</FormLabel>
+							{showNewLocation ? (
+								<div className='flex gap-2'>
+									<Input
+										value={newLocation}
+										onChange={(e) => setNewLocation(e.target.value)}
+										placeholder='Nouveau lieu'
+									/>
+									<Button
+										type='button'
+										onClick={() => {
+											if (
+												newLocation.trim() &&
+												!locations.includes(newLocation.trim())
+											) {
+												setLocations((prev) => [...prev, newLocation.trim()])
+												field.onChange(newLocation.trim())
+											}
+											setShowNewLocation(false)
+											setNewLocation('')
+										}}
+									>
+										Ajouter
+									</Button>
+									<Button
+										type='button'
+										variant='secondary'
+										onClick={() => {
+											setShowNewLocation(false)
+											setNewLocation('')
+										}}
+									>
+										Annuler
+									</Button>
+								</div>
+							) : (
+								<div className='flex gap-2'>
+									<Select onValueChange={field.onChange} value={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder='Lieu' />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											{locations.map((loc) => (
+												<SelectItem key={loc} value={loc}>
+													{loc}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Button
+										type='button'
+										onClick={() => setShowNewLocation(true)}
+									>
+										Ajouter un lieu
+									</Button>
+								</div>
+							)}
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name='reviewer_name'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Reviewer</FormLabel>
+							<Select onValueChange={field.onChange} defaultValue={field.value}>
+								<FormControl>
+									<SelectTrigger>
+										<SelectValue placeholder='Reviewer' />
+									</SelectTrigger>
+								</FormControl>
+								<SelectContent>
+									<SelectItem value='Gaëtan'>Gaëtan</SelectItem>
+									<SelectItem value='Ferdinand'>Ferdinand</SelectItem>
+									<SelectItem value='Lili-Rose'>Lili-Rose</SelectItem>
+								</SelectContent>
+							</Select>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name='rating'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Note</FormLabel>
+							<FormControl>
+								<Input
+									type='number'
+									step='0.1'
+									max={10}
+									placeholder='Note'
+									{...field}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name='date'
+					render={({ field }) => (
+						<FormItem className='flex flex-col'>
+							<FormLabel>Date</FormLabel>
+							<Popover>
+								<PopoverTrigger asChild>
+									<FormControl>
+										<Button
+											variant={'outline'}
+											className={cn(
+												'w-[240px] pl-3 text-left font-normal',
+												!field.value && 'text-muted-foreground'
+											)}
+										>
+											{field.value ? (
+												format(
+													typeof field.value === 'string'
+														? new Date(field.value)
+														: field.value,
+													'PPP'
+												)
+											) : (
+												<span>Choisir une date</span>
+											)}
+											<CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+										</Button>
+									</FormControl>
+								</PopoverTrigger>
+								<PopoverContent className='w-auto p-0' align='start'>
+									<Calendar
+										mode='single'
+										selected={
+											typeof field.value === 'string'
+												? new Date(field.value)
+												: field.value
+										}
+										onSelect={(date) => {
+											// Convert to yyyy-mm-dd string for your DB
+											if (date) {
+												const iso = date.toISOString().slice(0, 10)
+												field.onChange(iso)
+											}
+										}}
+										captionLayout='dropdown'
+									/>
+								</PopoverContent>
+							</Popover>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name='comment'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Commentaire</FormLabel>
+							<FormControl>
+								<Textarea {...field} />
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<Button type='submit' disabled={loading}>
+					{loading ? 'Envoi...' : 'Envoyer'}
+				</Button>
+				{error && <div className='text-red-500'>{error}</div>}
+				<RepasLineChart data={allData} />
+			</form>
+		</Form>
 	)
-}
-
-export default function Page() {
-	return <SuperRepasForm />
 }
