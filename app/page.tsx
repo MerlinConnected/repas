@@ -19,11 +19,7 @@ type RepasEntry = {
 	created_at: string
 }
 
-export default function SuperRepasForm({
-	onSuccess
-}: {
-	onSuccess?: () => void
-}) {
+function SuperRepasForm({ onSuccess }: { onSuccess?: () => void }) {
 	const [form, setForm] = useState({
 		restaurant_name: '',
 		reviewer_name: '',
@@ -275,4 +271,8 @@ export default function SuperRepasForm({
 			<RepasLineChart data={allData} />
 		</form>
 	)
+}
+
+export default function Page() {
+	return <SuperRepasForm />
 }
