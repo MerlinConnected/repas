@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import RepasLineChart from '../components/RepasLineChart'
+
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import RepasLineChart from '@/components/RepasLineChart'
 
 const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -165,6 +168,10 @@ function SuperRepasForm({ onSuccess }: { onSuccess?: () => void }) {
 				</div>
 			) : (
 				<div className='flex gap-2'>
+					<div className='grid w-full max-w-sm items-center gap-3'>
+						<Label htmlFor='email'>Email</Label>
+						<Input type='email' id='email' placeholder='Email' />
+					</div>
 					<select
 						name='restaurant_name'
 						value={form.restaurant_name}
