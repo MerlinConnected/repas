@@ -9,6 +9,16 @@ const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+type RepasEntry = {
+	id?: number
+	restaurant_name: string
+	reviewer_name: string
+	rating: number
+	comment: string
+	location: string
+	created_at: string
+}
+
 export default function SuperRepasForm({
 	onSuccess
 }: {
@@ -26,7 +36,7 @@ export default function SuperRepasForm({
 	const [error, setError] = useState<string | null>(null)
 	const [restaurants, setRestaurants] = useState<string[]>([])
 	const [showNewRestaurant, setShowNewRestaurant] = useState(false)
-	const [allData, setAllData] = useState<any[]>([])
+	const [allData, setAllData] = useState<RepasEntry[]>([])
 	const [locations, setLocations] = useState<string[]>([])
 	const [showNewLocation, setShowNewLocation] = useState(false)
 
@@ -38,7 +48,7 @@ export default function SuperRepasForm({
 				.select('restaurant_name')
 			if (!error && data) {
 				const unique = Array.from(
-					new Set(data.map((r: any) => r.restaurant_name).filter(Boolean))
+					new Set(data.map((r) => r.restaurant_name).filter(Boolean))
 				)
 				setRestaurants(unique)
 			}
@@ -63,7 +73,7 @@ export default function SuperRepasForm({
 				.select('location')
 			if (!error && data) {
 				const unique = Array.from(
-					new Set(data.map((r: any) => r.location).filter(Boolean))
+					new Set(data.map((r) => r.location).filter(Boolean))
 				)
 				setLocations(unique)
 			}

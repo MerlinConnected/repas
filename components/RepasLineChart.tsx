@@ -21,7 +21,17 @@ Chart.register(
 	Tooltip
 )
 
-export default function RepasLineChart({ data }: { data: any[] }) {
+type RepasEntry = {
+	id?: number
+	restaurant_name: string
+	reviewer_name: string
+	rating: number
+	comment: string
+	location: string
+	created_at: string
+}
+
+export default function RepasLineChart({ data }: { data: RepasEntry[] }) {
 	// Get unique sorted dates (YYYY-MM-DD)
 	const dates = Array.from(
 		new Set(
