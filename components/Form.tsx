@@ -320,7 +320,7 @@ export default function FormComponent() {
 					name='date'
 					render={({ field }) => (
 						<FormItem className='flex flex-col'>
-							<FormLabel>C'est quand tu manges ? 🗓️</FormLabel>
+							<FormLabel>C&apos;est quand tu manges ? 🗓️</FormLabel>
 							<Popover>
 								<PopoverTrigger asChild>
 									<FormControl>
@@ -380,7 +380,7 @@ export default function FormComponent() {
 					name='comment'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Qu'est-ce que tu as à en dire ? 💬</FormLabel>
+							<FormLabel>Qu&apos;est-ce que tu as à en dire ? 💬</FormLabel>
 							<FormControl>
 								<Textarea {...field} />
 							</FormControl>
