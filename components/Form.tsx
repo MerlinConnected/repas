@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/popover'
 
 import { cn } from '@/lib/utils'
-
 import { fetchAllData, type RepasEntry } from '@/lib/fetch'
 
 const supabase = createClient(
@@ -286,8 +285,22 @@ export default function FormComponent() {
 									placeholder='Note'
 									inputMode='decimal'
 									{...field}
+									onChange={(e) => {
+										const value = parseFloat(e.target.value)
+										if (value > 10) {
+											e.target.value = '10'
+											field.onChange('10')
+										} else {
+											field.onChange(e.target.value)
+										}
+									}}
 								/>
 							</FormControl>
+							{field.value && parseFloat(field.value) > 10 && (
+								<div className='text-sm text-amber-600 font-medium'>
+									⚠️ La note ne peut pas dépasser 10
+								</div>
+							)}
 							<FormMessage />
 						</FormItem>
 					)}
