@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -17,9 +16,7 @@ import {
 import {
 	Select,
 	SelectContent,
-	SelectGroup,
 	SelectItem,
-	SelectLabel,
 	SelectTrigger,
 	SelectValue
 } from '@/components/ui/select'
@@ -55,13 +52,23 @@ type RepasFormValues = {
 export default function Page() {
 	const [restaurants, setRestaurants] = useState<string[]>([])
 	const [locations, setLocations] = useState<string[]>([])
-	const [allData, setAllData] = useState<any[]>([])
+	const [allData, setAllData] = useState<
+		Array<{
+			restaurant_name: string
+			reviewer_name: string
+			rating: number
+			comment: string
+			location: string
+			created_at: string
+		}>
+	>([])
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [showNewRestaurant, setShowNewRestaurant] = useState(false)
 	const [newRestaurant, setNewRestaurant] = useState('')
 	const [showNewLocation, setShowNewLocation] = useState(false)
 	const [newLocation, setNewLocation] = useState('')
+	console.log(allData)
 
 	const form = useForm<RepasFormValues>({
 		defaultValues: {
