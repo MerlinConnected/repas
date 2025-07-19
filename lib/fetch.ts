@@ -12,6 +12,7 @@ export type RepasEntry = {
 	comment: string
 	location: string
 	created_at: string
+	umai: boolean
 }
 
 export async function fetchRestaurants(): Promise<string[]> {

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 
 import { format } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
@@ -31,6 +32,8 @@ import {
 	PopoverContent,
 	PopoverTrigger
 } from '@/components/ui/popover'
+
+import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 import { fetchAllData, type RepasEntry } from '@/lib/fetch'
@@ -47,6 +50,7 @@ type RepasFormValues = {
 	comment: string
 	location: string
 	date: string
+	umai: boolean
 }
 
 export default function FormComponent() {
@@ -67,7 +71,8 @@ export default function FormComponent() {
 			rating: '',
 			comment: '',
 			location: '',
-			date: new Date().toISOString().slice(0, 10)
+			date: new Date().toISOString().slice(0, 10),
+			umai: false
 		}
 	})
 
@@ -92,6 +97,7 @@ export default function FormComponent() {
 			rating: parseFloat(values.rating),
 			comment: values.comment,
 			location: values.location,
+			umai: values.umai,
 			created_at: new Date(values.date).toISOString()
 		}
 
@@ -112,10 +118,102 @@ export default function FormComponent() {
 			<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
 				<FormField
 					control={form.control}
+					name='reviewer_name'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Qui est tu ? 🤨</FormLabel>
+							<Select onValueChange={field.onChange} defaultValue={field.value}>
+								<FormControl>
+									<SelectTrigger>
+										<SelectValue placeholder='Nom' />
+									</SelectTrigger>
+								</FormControl>
+								<SelectContent>
+									<SelectItem value='Gaëtan'>Gaëtan</SelectItem>
+									<SelectItem value='Ferdinand'>Ferdinand</SelectItem>
+									<SelectItem value='Lili-Rose'>Lili-Rose</SelectItem>
+								</SelectContent>
+							</Select>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
+					name='location'
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Où est-ce que tu as mangé ? 🍽️</FormLabel>
+							{showNewLocation ? (
+								<div className='flex gap-2'>
+									<Input
+										value={newLocation}
+										onChange={(e) => setNewLocation(e.target.value)}
+										placeholder='Nouveau lieu'
+									/>
+									<Button
+										type='button'
+										onClick={() => {
+											if (
+												newLocation.trim() &&
+												!locations.includes(newLocation.trim())
+											) {
+												setLocations((prev) => [...prev, newLocation.trim()])
+												field.onChange(newLocation.trim())
+											}
+											setShowNewLocation(false)
+											setNewLocation('')
+										}}
+									>
+										Ajouter
+									</Button>
+									<Button
+										type='button'
+										variant='secondary'
+										onClick={() => {
+											setShowNewLocation(false)
+											setNewLocation('')
+										}}
+									>
+										Annuler
+									</Button>
+								</div>
+							) : (
+								<div className='flex gap-2'>
+									<Select onValueChange={field.onChange} value={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder='Lieu' />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											{locations.map((loc) => (
+												<SelectItem key={loc} value={loc}>
+													{loc}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Button
+										type='button'
+										onClick={() => setShowNewLocation(true)}
+									>
+										Ajouter un lieu
+									</Button>
+								</div>
+							)}
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
 					name='restaurant_name'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Nom du plat</FormLabel>
+							<FormLabel>Quel est le nom du plat ? 🫦</FormLabel>
 							{showNewRestaurant ? (
 								<div className='flex gap-2'>
 									<Input
@@ -181,102 +279,13 @@ export default function FormComponent() {
 						</FormItem>
 					)}
 				/>
-				<FormField
-					control={form.control}
-					name='location'
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Lieu</FormLabel>
-							{showNewLocation ? (
-								<div className='flex gap-2'>
-									<Input
-										value={newLocation}
-										onChange={(e) => setNewLocation(e.target.value)}
-										placeholder='Nouveau lieu'
-									/>
-									<Button
-										type='button'
-										onClick={() => {
-											if (
-												newLocation.trim() &&
-												!locations.includes(newLocation.trim())
-											) {
-												setLocations((prev) => [...prev, newLocation.trim()])
-												field.onChange(newLocation.trim())
-											}
-											setShowNewLocation(false)
-											setNewLocation('')
-										}}
-									>
-										Ajouter
-									</Button>
-									<Button
-										type='button'
-										variant='secondary'
-										onClick={() => {
-											setShowNewLocation(false)
-											setNewLocation('')
-										}}
-									>
-										Annuler
-									</Button>
-								</div>
-							) : (
-								<div className='flex gap-2'>
-									<Select onValueChange={field.onChange} value={field.value}>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder='Lieu' />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{locations.map((loc) => (
-												<SelectItem key={loc} value={loc}>
-													{loc}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Button
-										type='button'
-										onClick={() => setShowNewLocation(true)}
-									>
-										Ajouter un lieu
-									</Button>
-								</div>
-							)}
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<FormField
-					control={form.control}
-					name='reviewer_name'
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Reviewer</FormLabel>
-							<Select onValueChange={field.onChange} defaultValue={field.value}>
-								<FormControl>
-									<SelectTrigger>
-										<SelectValue placeholder='Reviewer' />
-									</SelectTrigger>
-								</FormControl>
-								<SelectContent>
-									<SelectItem value='Gaëtan'>Gaëtan</SelectItem>
-									<SelectItem value='Ferdinand'>Ferdinand</SelectItem>
-									<SelectItem value='Lili-Rose'>Lili-Rose</SelectItem>
-								</SelectContent>
-							</Select>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
+
 				<FormField
 					control={form.control}
 					name='rating'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Note</FormLabel>
+							<FormLabel>Quelle note donnerais-tu ? 🤔</FormLabel>
 							<FormControl>
 								<Input
 									type='number'
@@ -305,12 +314,13 @@ export default function FormComponent() {
 						</FormItem>
 					)}
 				/>
+
 				<FormField
 					control={form.control}
 					name='date'
 					render={({ field }) => (
 						<FormItem className='flex flex-col'>
-							<FormLabel>Date</FormLabel>
+							<FormLabel>C'est quand tu manges ? 🗓️</FormLabel>
 							<Popover>
 								<PopoverTrigger asChild>
 									<FormControl>
@@ -364,12 +374,13 @@ export default function FormComponent() {
 						</FormItem>
 					)}
 				/>
+
 				<FormField
 					control={form.control}
 					name='comment'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Commentaire</FormLabel>
+							<FormLabel>Qu'est-ce que tu as à en dire ? 💬</FormLabel>
 							<FormControl>
 								<Textarea {...field} />
 							</FormControl>
@@ -377,7 +388,27 @@ export default function FormComponent() {
 						</FormItem>
 					)}
 				/>
-				<Button type='submit' disabled={loading}>
+
+				<FormField
+					control={form.control}
+					name='umai'
+					render={({ field }) => (
+						<FormItem className='flex items-center space-x-2'>
+							<Switch
+								id='umai'
+								onCheckedChange={field.onChange}
+								checked={field.value}
+							/>
+							<FormLabel>UMMAAAAAAAAAI</FormLabel>
+						</FormItem>
+					)}
+				/>
+
+				<Button
+					type='submit'
+					disabled={loading}
+					onClick={() => toast.success('Repas ajouté avec succès')}
+				>
 					{loading ? 'Envoi...' : 'Envoyer'}
 				</Button>
 				{error && <div className='text-red-500'>{error}</div>}
