@@ -284,6 +284,7 @@ export default function FormComponent() {
 									step='0.1'
 									max={10}
 									placeholder='Note'
+									inputMode='decimal'
 									{...field}
 								/>
 							</FormControl>
