@@ -411,7 +411,7 @@ export default function FormComponent() {
 				>
 					{loading ? 'Envoi...' : 'Envoyer'}
 				</Button>
-				{error && <div className='text-red-500'>{error}</div>}
+				{error && toast.error(error)}
 			</form>
 		</Form>
 	)
