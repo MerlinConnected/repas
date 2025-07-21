@@ -295,12 +295,14 @@ export default function FormComponent() {
 									inputMode='decimal'
 									{...field}
 									onChange={(e) => {
-										const value = parseFloat(e.target.value)
+										// Replace comma with dot for decimal separator
+										const sanitized = e.target.value.replace(',', '.')
+										const value = parseFloat(sanitized)
 										if (value > 10) {
 											e.target.value = '10'
 											field.onChange('10')
 										} else {
-											field.onChange(e.target.value)
+											field.onChange(sanitized)
 										}
 									}}
 								/>
