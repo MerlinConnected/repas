@@ -91,6 +91,21 @@ export default function FormComponent() {
 		setLoading(true)
 		setError(null)
 
+		// Parse the date from the form (YYYY-MM-DD)
+		const date = new Date(values.date)
+		const now = new Date()
+		let mealHour = 12 // default to lunch
+
+		if (now.getHours() >= 17) {
+			mealHour = 21 // dinner
+		}
+
+		// Set the time in Japan time
+		date.setHours(mealHour, 0, 0, 0)
+
+		// Calculate the UTC time by subtracting the timezone offset
+		const utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+
 		const insertData = {
 			restaurant_name: values.restaurant_name,
 			reviewer_name: values.reviewer_name,
@@ -98,7 +113,7 @@ export default function FormComponent() {
 			comment: values.comment,
 			location: values.location,
 			umai: values.umai,
-			created_at: new Date(values.date).toISOString()
+			created_at: utcDate.toISOString()
 		}
 
 		const { data, error } = await supabase
