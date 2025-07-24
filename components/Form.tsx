@@ -136,7 +136,7 @@ export default function FormComponent() {
 					name='reviewer_name'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Qui est tu ? 🤨</FormLabel>
+							<FormLabel>Qui es-tu ? 🤨</FormLabel>
 							<Select onValueChange={field.onChange} defaultValue={field.value}>
 								<FormControl>
 									<SelectTrigger>
